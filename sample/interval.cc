@@ -1,8 +1,9 @@
 #include <chrono>
 
-#include "console.hpp"
 #include "rxcpp/rx.hpp"
-#include "rxwayland.hpp"
+
+#include "rxwayland/console.hpp"
+#include "rxwayland/run_loop.hpp"
 
 int main() {
   rxwayland::console::out("main\n");
