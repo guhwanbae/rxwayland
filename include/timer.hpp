@@ -44,15 +44,15 @@ class timer {
 
   void set_timeout_point(const typename clock_type::time_point& timeout_point) {
     const auto now = clock_type::now();
-    const auto nanosec = static_cast<int>(
+    const auto nanosec =
         std::max(std::chrono::duration_cast<std::chrono::nanoseconds>(
                      timeout_point - now),
                  std::chrono::nanoseconds::zero())
-            .count());
+            .count();
 
-    const int sec = nanosec / std::nano::den;
-    const int fraction_nanosec =
-        std::max(static_cast<std::intmax_t>(1), nanosec % std::nano::den);
+    const int sec = static_cast<int>(nanosec / std::nano::den);
+    const int fraction_nanosec = static_cast<int>(
+        std::max(static_cast<std::intmax_t>(1), nanosec % std::nano::den));
 
     itimerspec disarm_period{};
     itimerspec period{{0, 0}, {sec, fraction_nanosec}};
