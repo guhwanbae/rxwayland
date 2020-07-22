@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cassert>
-#include <memory>
 
 #include "rxcpp/rx.hpp"
 
@@ -11,24 +10,13 @@ namespace rxwayland {
 namespace detail {
 
 template <class T>
-struct listener_with_subscriber {
-  using this_t = listener_with_subscriber<T>;
-
-  wl_listener listener;
-  wl_listener destroy_listener;
+struct signal_connector {
+  wl_listener listener{};
+  wl_listener destroy_listener{};
+  bool receive_destroy_signal{false};
   rxcpp::subscriber<T> subscriber;
 
-  listener_with_subscriber(const rxcpp::subscriber<T>& s)
-      : listener{}, destroy_listener{}, subscriber{s} {
-    listener.notify = [](wl_listener* l, void* data) {
-      this_t* this_ptr = wl_container_of(l, this_ptr, listener);
-      this_ptr->subscriber.on_next(static_cast<T>(data));
-    };
-    destroy_listener.notify = [](wl_listener* l, void*) {
-      this_t* this_ptr = wl_container_of(l, this_ptr, destroy_listener);
-      this_ptr->subscriber.on_completed();
-    };
-  }
+  explicit signal_connector(const rxcpp::subscriber<T>& s) : subscriber{s} {}
 };
 
 }  // namespace detail
@@ -40,16 +28,30 @@ rxcpp::observable<T> from_signal(wl_signal* signal, wl_signal* destroy_signal) {
 
   return rxcpp::observable<>::create<T>(
       [signal, destroy_signal](const rxcpp::subscriber<T>& subscriber) {
-        auto lws =
-            std::make_shared<detail::listener_with_subscriber<T>>(subscriber);
+        using connector_t = detail::signal_connector<T>;
+        auto conn = new connector_t{subscriber};
 
-        lws->subscriber.add([lws]() {
-          wl_list_remove(&(lws->listener.link));
-          wl_list_remove(&(lws->destroy_listener.link));
+        conn->listener.notify = [](wl_listener* l, void* data) {
+          connector_t* conn = wl_container_of(l, conn, listener);
+          conn->subscriber.on_next(static_cast<T>(data));
+        };
+        conn->destroy_listener.notify = [](wl_listener* l, void*) {
+          connector_t* conn = wl_container_of(l, conn, destroy_listener);
+          conn->receive_destroy_signal = true;
+          conn->subscriber.on_completed();
+          delete conn;
+        };
+
+        conn->subscriber.add([conn]() {
+          wl_list_remove(&conn->listener.link);
+          wl_list_remove(&conn->destroy_listener.link);
+          if (!conn->receive_destroy_signal) {
+            delete conn;
+          }
         });
 
-        wl_signal_add(signal, &(lws->listener));
-        wl_signal_add(destroy_signal, &(lws->destroy_listener));
+        wl_signal_add(signal, &conn->listener);
+        wl_signal_add(destroy_signal, &conn->destroy_listener);
       });
 }
 
