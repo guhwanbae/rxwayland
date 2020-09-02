@@ -1,0 +1,10 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+includedir=${prefix}/@CMAKE_INSTALL_INCLUDEDIR@
+
+Name: @PROJECT_NAME@
+Description: @PROJECT_DESCRIPTION@
+Version: @PROJECT_VERSION@
+
+Requires:
+Libs: -lwayland-server -lfmt
+Cflags: -I${includedir}
