@@ -1,20 +1,14 @@
 cmake_minimum_required(VERSION 3.2 FATAL_ERROR)
 
-project(
-  rxwayland
-  VERSION 0.0.0
-  DESCRIPTION "The reactive extensions for Wayland protocol"
-  HOMEPAGE_URL "https://github.com/guhwanbae/rxwayland")
+project(rxwayland VERSION 0.0.0)
 
 include(FindPkgConfig)
 pkg_check_modules(WAYLAND_SERVER wayland-server REQUIRED)
-find_package(fmt)
 
 add_library(${PROJECT_NAME} INTERFACE)
 target_include_directories(${PROJECT_NAME}
                            INTERFACE include ${WAYLAND_SERVER_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME} INTERFACE ${WAYLAND_SERVER_LDFLAGS}
-                                                fmt::fmt)
+target_link_libraries(${PROJECT_NAME} INTERFACE ${WAYLAND_SERVER_LDFLAGS})
 
 # TODO: Should I release this package with rxwaylandConfig.cmake?
 include(GNUInstallDirs)
