@@ -6,5 +6,5 @@ Description: @PROJECT_DESCRIPTION@
 Version: @PROJECT_VERSION@
 
 Requires:
-Libs: -lwayland-server -lfmt
+Libs: -lwayland-server
 Cflags: -I${includedir}
